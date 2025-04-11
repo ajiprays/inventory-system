@@ -1,0 +1,24 @@
+# Stage 1: Build the application using Maven
+FROM maven:3.8.5-openjdk-17 AS builder
+
+# Set working directory
+WORKDIR /app
+
+# Copy the pom.xml and source code
+COPY pom.xml .
+COPY src ./src
+
+# Run Maven to build the application, skipping tests
+RUN mvn package -DskipTests
+
+# Stage 2: Create the final image with the JAR file
+FROM openjdk:17-jdk-slim
+
+# Set working directory
+WORKDIR /app
+
+# Copy the JAR file from the builder stage
+COPY --from=builder /app/target/*.jar app.jar
+
+# Set the entrypoint to run the JAR file
+ENTRYPOINT ["java", "-jar", "app.jar"]

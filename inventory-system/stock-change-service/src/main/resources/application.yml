@@ -1,0 +1,37 @@
+server:
+  port: 8083
+
+spring:
+  application:
+    name: stock-change-service
+  kafka:
+    bootstrap-servers: kafka:9092
+#    bootstrap-servers: localhost:9092
+    consumer:
+      group-id: stock-change-group
+  datasource:
+      url: jdbc:postgresql://postgres-stock:5432/stock_change_db
+#      url: jdbc:postgresql://localhost:5434/stock_change_db
+      username: user
+      password: password
+  jpa:
+    database-platform: org.hibernate.dialect.PostgreSQLDialect
+    hibernate:
+      ddl-auto: none
+    properties:
+      hibernate:
+        dialect: org.hibernate.dialect.PostgreSQLDialect
+
+  data:
+    redis:
+      host: redis
+      port: 6379
+
+logging:
+  level:
+    root: INFO
+    com.inventory_system: DEBUG
+    org.springframework: INFO
+    org.apache.kafka: WARN
+  pattern:
+    console: "%d{yyyy-MM-dd HH:mm:ss} %-5level %logger{36} - %msg%n"
