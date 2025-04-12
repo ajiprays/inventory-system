@@ -68,3 +68,6 @@
 - **Maven**: Untuk manajemen dependensi dan build.
 - **ElasticSearch**: Database untuk penyimpanan data untuk searching.
 ---
+
+## Command Tambahan
+- docker volume rm maven-repo : untuk menghapus volume cache maven
