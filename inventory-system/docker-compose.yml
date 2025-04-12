@@ -2,9 +2,15 @@
 services:
   # Product Service
   product-service:
+    container_name: inventory-system-product-service
     build: ./product-service
     ports:
       - "8082:8082"
+    environment:
+      - SPRING_DATASOURCE_URL=jdbc:postgresql://postgres-product:5432/product_db
+      - SPRING_KAFKA_BOOTSTRAP_SERVERS=kafka:9092
+      - SPRING_DATA_REDIS_HOST=redis
+      - SPRING_ELASTICSEARCH_URIS=http://elasticsearch:9200
     depends_on:
       kafka:
         condition: service_healthy
@@ -16,12 +22,26 @@ services:
         condition: service_healthy
     networks:
       - app-network
+    volumes:
+      - maven-cache:/root/.m2
+    healthcheck:
+      test: ["CMD-SHELL", "curl -f http://localhost:8082/actuator/health || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
 
   # Stock Change Service
   stock-change-service:
+    container_name: inventory-system-stock-change-service
     build: ./stock-change-service
     ports:
       - "8083:8083"
+    environment:
+      - SPRING_DATASOURCE_URL=jdbc:postgresql://postgres-stock:5432/stock_change_db
+      - SPRING_KAFKA_BOOTSTRAP_SERVERS=kafka:9092
+      - SPRING_DATA_REDIS_HOST=redis
+      - PRODUCT_SERVICE_URL=http://product-service:8082
     depends_on:
       kafka:
         condition: service_healthy
@@ -30,30 +50,55 @@ services:
       redis:
         condition: service_healthy
       product-service:
-        condition: service_started
+        condition: service_healthy
     networks:
       - app-network
+    volumes:
+      - maven-cache:/root/.m2
+    healthcheck:
+      test: ["CMD-SHELL", "curl -f http://localhost:8083/actuator/health || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
 
   # Notification Service
   notification-service:
+    container_name: inventory-system-notification-service
     build: ./notification-service
     ports:
       - "8084:8084"
+    environment:
+      - SPRING_KAFKA_BOOTSTRAP_SERVERS=kafka:9092
+      - SPRING_DATA_REDIS_HOST=redis
     depends_on:
       kafka:
         condition: service_healthy
       redis:
         condition: service_healthy
       product-service:
-        condition: service_started
+        condition: service_healthy
     networks:
       - app-network
+    volumes:
+      - maven-cache:/root/.m2
+    healthcheck:
+      test: ["CMD-SHELL", "curl -f http://localhost:8084/actuator/health || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
 
   # Analytics Service
   analytics-service:
+    container_name: inventory-system-analytics-service
     build: ./analytics-service
     ports:
       - "8085:8085"
+    environment:
+      - SPRING_DATASOURCE_URL=jdbc:postgresql://postgres-analytics:5432/analytics_db
+      - SPRING_KAFKA_BOOTSTRAP_SERVERS=kafka:9092
+      - SPRING_DATA_REDIS_HOST=redis
     depends_on:
       kafka:
         condition: service_healthy
@@ -63,9 +108,18 @@ services:
         condition: service_healthy
     networks:
       - app-network
+    volumes:
+      - maven-cache:/root/.m2
+    healthcheck:
+      test: ["CMD-SHELL", "curl -f http://localhost:8085/actuator/health || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
 
   # PostgreSQL untuk Product Service
   postgres-product:
+    container_name: inventory-system-postgres-product
     image: postgres:15
     environment:
       POSTGRES_USER: user
@@ -82,9 +136,11 @@ services:
       interval: 10s
       timeout: 5s
       retries: 5
+      start_period: 10s
 
   # PostgreSQL untuk Stock Change Service
   postgres-stock:
+    container_name: inventory-system-postgres-stock
     image: postgres:15
     environment:
       POSTGRES_USER: user
@@ -101,9 +157,11 @@ services:
       interval: 10s
       timeout: 5s
       retries: 5
+      start_period: 10s
 
   # PostgreSQL untuk Analytics Service
   postgres-analytics:
+    container_name: inventory-system-postgres-analytics
     image: postgres:15
     environment:
       POSTGRES_USER: user
@@ -120,9 +178,11 @@ services:
       interval: 10s
       timeout: 5s
       retries: 5
+      start_period: 10s
 
   # Redis
   redis:
+    container_name: inventory-system-redis
     image: redis:7
     ports:
       - "6379:6379"
@@ -133,37 +193,50 @@ services:
       interval: 10s
       timeout: 5s
       retries: 5
+      start_period: 10s
 
   # Zookeeper untuk Kafka
   zookeeper:
-    image: confluentinc/cp-zookeeper:latest
+    container_name: inventory-system-zookeeper
+    image: confluentinc/cp-zookeeper:7.5.3
     environment:
       ZOOKEEPER_CLIENT_PORT: 2181
       ZOOKEEPER_TICK_TIME: 2000
+      ZOOKEEPER_AUTOPURGE_SNAP_RETAIN_COUNT: 3
+      ZOOKEEPER_AUTOPURGE_PURGE_INTERVAL: 1
+      ZOOKEEPER_4LW_COMMANDS_WHITELIST: srvr,stat,ruok,mntr,conf
     ports:
-      - "2182:2181"
+      - "2181:2181"
+    volumes:
+      - zookeeper-data:/var/lib/zookeeper/data
+      - zookeeper-log:/var/lib/zookeeper/log
     networks:
       - app-network
     healthcheck:
-      test: ["CMD-SHELL", "echo ruok | nc -w 2 localhost 2181 | grep imok"]
+      test: ["CMD-SHELL", "echo ruok | nc localhost 2181"]
       interval: 10s
       timeout: 5s
       retries: 5
+      start_period: 30s
 
   # Kafka
   kafka:
-    image: confluentinc/cp-kafka:latest
+    container_name: inventory-system-kafka
+    image: confluentinc/cp-kafka:7.5.3
     depends_on:
-      - zookeeper
+      zookeeper:
+        condition: service_healthy
     environment:
       KAFKA_BROKER_ID: 1
       KAFKA_ZOOKEEPER_CONNECT: zookeeper:2181
       KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://kafka:9092
-#      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://kafka:9092,PLAINTEXT_HOST://localhost:9092
-      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: PLAINTEXT:PLAINTEXT,PLAINTEXT_HOST:PLAINTEXT
+      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: PLAINTEXT:PLAINTEXT
       KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
+      KAFKA_ZOOKEEPER_SESSION_TIMEOUT_MS: 30000
     ports:
       - "9092:9092"
+    volumes:
+      - kafka-data:/var/lib/kafka/data
     networks:
       - app-network
     healthcheck:
@@ -171,9 +244,11 @@ services:
       interval: 10s
       timeout: 5s
       retries: 5
+      start_period: 30s
 
   # Elasticsearch
   elasticsearch:
+    container_name: inventory-system-elasticsearch
     image: docker.elastic.co/elasticsearch/elasticsearch:8.14.0
     environment:
       - discovery.type=single-node
@@ -190,15 +265,29 @@ services:
       interval: 10s
       timeout: 5s
       retries: 5
+      start_period: 30s
 
 # Jaringan untuk komunikasi antar layanan
 networks:
   app-network:
+    name: inventory_system_app_network
     driver: bridge
 
 # Volume untuk persistensi data PostgreSQL
 volumes:
   postgres-product-data:
+    name: inventory-system-postgres-product-data
   postgres-stock-data:
+    name: inventory-system-postgres-stock-data
   postgres-analytics-data:
+    name: inventory-system-postgres-analytics-data
   es-data:
+    name: inventory-system-es-data
+  maven-cache:
+    name: inventory-system-maven-cache
+  zookeeper-data:
+    name: inventory-system-zookeeper-data
+  zookeeper-log:
+    name: inventory-system-zookeeper-log
+  kafka-data:
+    name: inventory-system-kafka-data

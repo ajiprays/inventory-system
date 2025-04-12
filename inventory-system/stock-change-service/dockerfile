@@ -6,6 +6,11 @@ WORKDIR /app
 
 # Copy the pom.xml and source code
 COPY pom.xml .
+
+# Unduh dependensi (layer ini akan di-cache selama pom.xml tidak berubah)
+RUN mvn dependency:go-offline -B
+
+# Copy source code
 COPY src ./src
 
 # Run Maven to build the application, skipping tests
