@@ -19,7 +19,7 @@ public class ProductEventConsumer {
 	private final ProductRepository productRepository;
 	private final ObjectMapper objectMapper;
 	
-//    @KafkaListener(topics = "product-events", groupId = "analytics-group")
+    @KafkaListener(topics = "product-events", groupId = "analytics-group")
     public void consume(ConsumerRecord<String, String> record) {
     	try {
     		String message = record.value();

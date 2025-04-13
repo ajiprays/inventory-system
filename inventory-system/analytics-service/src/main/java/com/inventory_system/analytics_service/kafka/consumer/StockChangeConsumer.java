@@ -26,7 +26,7 @@ public class StockChangeConsumer {
 	private final StockChangeRepository stockChangeRepository;
 	
 
-//    @KafkaListener(topics = "stock-changes", groupId = "analytics-group")
+    @KafkaListener(topics = "stock-changes", groupId = "analytics-group")
     public void consume(ConsumerRecord<String, String> record) {
     	log.info("receive stock change : {}", record.value());
     	try {
