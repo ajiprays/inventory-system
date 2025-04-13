@@ -14,7 +14,7 @@ public interface SalesRecordRepository extends JpaRepository<SalesRecord, Long> 
     @Query(value = """
 		SELECT 
     		sr.product_id, 
-    		SUM(sr.quantity_sold) as totalSold
+    		SUM(sr.quantity_sold) AS total_sold
 		FROM sales_records sr
 		GROUP BY sr.product_id
 		ORDER BY total_sold DESC
