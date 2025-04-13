@@ -11,7 +11,9 @@ import com.inventory_system.analytics_service.persistence.repository.SalesRecord
 import com.inventory_system.analytics_service.service.AnalyticsService;
 
 import lombok.AllArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 
+@Slf4j
 @Service
 @AllArgsConstructor
 public class AnalyticsServiceImpl implements AnalyticsService {
