@@ -1,0 +1,36 @@
+server:
+  port: 8084
+
+spring:
+  application:
+    name: notification-service
+  kafka:
+    bootstrap-servers: kafka:9092
+  mail:
+    host: smtp.gmail.co
+    port: 2525
+    username: your-email@gmail.com
+    password: your-app-password
+    properties:
+      mail:
+        smtp:
+          auth: true
+          starttls:
+            enable: true
+            required: true
+          connectiontimeout: 5000
+          timeout: 5000
+          writetimeout: 5000
+notification:
+  email:
+    sender: no-reply@mail.com
+    recipient: mail@mail.com
+
+logging:
+  level:
+    root: INFO
+    com.inventory_system: DEBUG
+    org.springframework: INFO
+    org.apache.kafka: WARN
+  pattern:
+    console: "%d{yyyy-MM-dd HH:mm:ss} %-5level %logger{36} - %msg%n"
