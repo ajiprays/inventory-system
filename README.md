@@ -43,7 +43,8 @@
    |    |                                   |
    v    v                                   v
 [Redis] [Elasticsearch]              [Notification Service]
-                                           
+
+Stock Change Service akan melakukan update stock melalui SALE/RESTOCK kemudian akan mengirimkan sebuah event melalui producer kafka yang akan diterima oleh Product Service, Analytics Service Consumer dan Notification Service consumer, Product Service akan mengupdate stock product pada database dan memperbarui cache, Analytics Service akan mencatat semua perubahan stock, Notification Service akan mengirimkan email jika stock product sudah mencapai batas minimum                                 
                                            
                                     
 ```
@@ -71,3 +72,14 @@
 
 ## Command Tambahan
 - docker volume rm maven-repo : untuk menghapus volume cache maven
+
+## Docker
+- **DockerFile** : file yang berisi serangkaian instruksi untuk membangun image Docker. Image ini adalah template yang digunakan untuk membuat container.
+   - Fungsi : 
+        - Mendefinisikan lingkungan aplikasi, seperti sistem operasi, dependensi, dan konfigurasi.
+        - Menentukan langkah-langkah untuk menginstal perangkat lunak, menyalin kode, dan menjalankan aplikasi.
+        - Menghasilkan image.
+- **Docker Compose** : alat untuk mendefinisikan dan mengelola aplikasi multi-container. memungkinkan untuk menjalankan beberapa container (misal: aplikasi/service, database, cache) secara bersamaan
+   - Fungsi :
+        - Mengatur hubungan antar container (misal: jaringan, volume).
+        - Menyederhanakan perintah untuk menjalankan, menghentikan, atau menskalakan aplikasi.
