@@ -34,18 +34,18 @@
 
 ### Diagram
 ```
-[Product Service] <--> [Kafka] <--> [Stock Change Service]
-   |    |                                |    |
-   |    |                                |    |
-   v    v                                v    v
-[PostgreSQL]                         [Notification Service]
-   |    |                                  |
-   |    |                                  |
-   v    v                                  v
-[Redis] [Elasticsearch]              [Analytics Service]
-                                           |
-                                           v
-                                     [PostgreSQL]
+[Product Service] <-- [Kafka] <-- [Stock Change Service] --> [Kafka] --> [Analytics Service]
+       |                                    |                                      |
+       |                                    |                                      |
+       v                                    v                                      v
+[PostgreSQL]                             [Kafka]                               [PostgreSQL]
+   |    |                                   |
+   |    |                                   |
+   v    v                                   v
+[Redis] [Elasticsearch]              [Notification Service]
+                                           
+                                           
+                                    
 ```
 
 ---
